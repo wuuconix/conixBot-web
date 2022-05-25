@@ -1,6 +1,5 @@
 <template>
     <div class="menu">
-        <!-- <img class="github" src="https://tva4.sinaimg.cn/large/007YVyKcly1h2kjmy9ccsj30u00u0gol.jpg"> -->
         <div class="status">
             <span v-if="online">在</span>
             <span v-if="!online">离</span>
@@ -8,24 +7,24 @@
             <img class="comi online" src="https://tva4.sinaimg.cn/large/007YVyKcly1h2kl62sylyj30dp0fkjvq.jpg" v-if="online">
             <span>线</span>
         </div>
-        <el-dropdown trigger="click">
-            <el-button type="primary">选择群<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
+        <el-dropdown trigger="click" v-if="online">
+            <el-button type="primary">群<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
             <template #dropdown>
                 <el-dropdown-menu>
                     <el-dropdown-item v-for="group in groups" @click="chooseGroup(group)">{{ group["name"] }}</el-dropdown-item>
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-        <el-dropdown trigger="click">
-            <el-button type="primary">选择群成员<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
+        <el-dropdown trigger="click" v-if="online">
+            <el-button type="primary">好友<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
             <template #dropdown>
                 <el-dropdown-menu>
                     <el-dropdown-item v-for="member in members" @click="chooseMember(member)">{{ member["memberName"] }}</el-dropdown-item>
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-        <el-button type="success" @click="openLoginDialog" v-if="!online">Login</el-button>
-        <el-button type="warning" @click="ws.close()" v-if="online">Logout</el-button>
+        <el-button type="success" @click="this.loginDialog = true" v-if="!online">Login</el-button>
+        <el-button type="warning" @click="logout" v-if="online">Logout</el-button>
     </div>
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
@@ -41,7 +40,7 @@
         <el-input v-model="key" placeholder="conixBot's verify_key" show-password/>
         <template #footer>
             <span class="dialog-footer">
-                <el-button type="primary" @click="authenticate">Confirm</el-button>
+                <el-button type="primary" @click="login">Confirm</el-button>
             </span>
         </template>
     </el-dialog>
@@ -49,21 +48,23 @@
 
 <script>
 import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
+import { apiBaseURI } from '../config.js'
+
 import { ArrowDown } from '@element-plus/icons-vue'
-import { wsBaseURI } from '../config.js'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
 import "element-plus/es/components/input/style/css"
 import "element-plus/es/components/notification/style/css"
 import "element-plus/es/components/skeleton/style/css"
 import "element-plus/es/components/dropdown/style/css"
+
 export default {
     data() {
         return {
+            wsURI: "",
             loginDialog: false,
             qq: "",
             key: "",
-            wsBaseURI: wsBaseURI,
             ws: null,
             online: false,
             action: "listen",
@@ -76,13 +77,42 @@ export default {
         }
     },
     components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowDown, ElIcon },
+    mounted() {
+        if (localStorage.getItem("token")) { //如果有token则自动发起请求得到wsURI
+            this.getWSURI()
+        }
+    },
     methods: {
-        openLoginDialog() {
-            this.loginDialog = true
+        login() { //登录成功后将获得token
+            fetch(`${apiBaseURI}/bot/login`, {
+                method: "POST",
+                body: new URLSearchParams({qq: this.qq, key: this.key})
+            }).then(res => res.json()).then(res => {
+                if (res.success) {
+                    localStorage.setItem("token", res.token)
+                    this.getWSURI() //利用token获取wsURI，之后建立ws连接
+                }
+            })
         },
-        authenticate() {
+        logout() { //切断ws并且删除token
+            this.ws.close()
+            localStorage.removeItem("token")
+        },
+        getWSURI() { //jwt鉴权后将得到wsURI
+            fetch(`${apiBaseURI}/bot/ws`, {
+                headers: { authorization: localStorage.getItem("token") }
+            }).then(res => res.json()).then(res => {
+                if (res.success) {
+                    this.wsURI = res.wsURI
+                    this.initWS()
+                } else {
+                    ElNotification({ title: 'Error', message: 'token过期 请重新登录', type: 'error' })
+                }
+            })
+        },
+        initWS() {
             this.action = "login"
-            let socket = new WebSocket(`ws://${this.wsBaseURI}/message?verifyKey=${this.key}&qq=${this.qq}`)
+            let socket = new WebSocket(this.wsURI)
             socket.addEventListener("message", this.handle_message)
             socket.addEventListener("close", this.handle_close)
             this.ws = socket
@@ -98,9 +128,9 @@ export default {
                         this.loginDialog = false
                         this.online = true
                         this.groupList() //登录成功后去查询qq群列表
-                        ElNotification({ title: 'Success', message: '验证通过！', type: 'success' })
+                        ElNotification({ title: 'Success', message: '登录成功!', type: 'success' })
                     } else {
-                        ElNotification({ title: 'Error', message: '验证失败！', type: 'error' })
+                        ElNotification({ title: 'Error', message: '登录失败!', type: 'error' })
                     }
                 } else if (this.action == "sendGroupMessage" || this.action == "sendTempMessage") {
                     if (result.data.code == 0) {
@@ -246,26 +276,31 @@ export default {
         width: 80%;
         margin: auto;
         height: calc(100% - 64px);
-        background-color: aquamarine;
     }
     div.chatname {
+        box-sizing: border-box;
         width: 100%;
         height: 64px;
-        background-color:brown;
         display: flex;
         justify-content: center;
         align-content: center;
         line-height: 64px;
+        overflow: hidden;
+        color: #337ecc;
+        border: 2px #337ecc solid;
+        border-top: none;
     }
     div.msgspace {
+        box-sizing: border-box;
         width: 100%;
         height: calc(75% - 64px);
-        background-color:mediumslateblue;
+        border: 2px #337ecc solid;
+        border-top: none;
+        border-bottom: none;
     }
     div.sendspace {
         width: 100%;
         height: 25%;
-        background-color: gold;
         position: relative;
     }
     .el-button.send {
@@ -274,8 +309,9 @@ export default {
         bottom: 0;
     }
     div.content {
+        box-sizing: border-box;
         width: 100%;
         height: calc(100% - 32px);
-        background-color: greenyellow;
+        border: 2px #337ecc solid;
     }
 </style>

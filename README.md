@@ -6,4 +6,4 @@
 
 接下来的工作主要是将websocket接受到的消息展示出来。
 
-![](https://tva1.sinaimg.cn/large/007YVyKcly1h2kq1a05j9j31080lm767.jpg)
+![](https://tvax2.sinaimg.cn/large/007YVyKcly1h2l2g6iq86j30pb0ixjsy.jpg)
