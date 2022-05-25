@@ -50,7 +50,7 @@
 <script>
 import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
-import { wsBaseURI, qq, key } from '../config.js'
+import { wsBaseURI } from '../config.js'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
 import "element-plus/es/components/input/style/css"
@@ -61,9 +61,9 @@ export default {
     data() {
         return {
             loginDialog: false,
-            qq: qq ?? "",
-            key: key ?? "",
-            wsBaseURI: wsBaseURI ?? "",
+            qq: "",
+            key: "",
+            wsBaseURI: wsBaseURI,
             ws: null,
             online: false,
             action: "listen",
