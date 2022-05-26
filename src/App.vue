@@ -29,9 +29,13 @@
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
         <div class="msgspace"></div>
-        <div class="sendspace">
+        <div class="sendspace" ref="sendspace">
             <div class="content" contenteditable ref="content"></div>
+            <el-button type="primary" @click="facesShow = !facesShow">表情</el-button>
             <el-button type="primary" class="send" @click="send">发送</el-button>
+            <div class="faces" v-show="facesShow">
+                <img v-for="uri in faceURI" :src="uri" @click="chooseFace(uri)">
+            </div>
         </div>
     </div>
     <el-dialog v-model="loginDialog" title="登录后使用conixBot" center draggable>
@@ -49,7 +53,6 @@
 <script>
 import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
 import { apiBaseURI } from '../config.js'
-
 import { ArrowDown } from '@element-plus/icons-vue'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
@@ -73,7 +76,8 @@ export default {
             members: [],
             merber: {}, //选择的qq群成员
             chatType: "group", //聊天类型
-            chatName: "" //群名或者群昵称
+            chatName: "", //群名或者群昵称
+            facesShow: false //是否显示表情预览框
         }
     },
     components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowDown, ElIcon },
@@ -81,6 +85,18 @@ export default {
         if (localStorage.getItem("token")) { //如果有token则自动发起请求得到wsURI
             this.getWSURI()
         }
+        document.body.addEventListener("click", (e) => {
+            console.log(e.target)
+            if (this.facesShow) {
+                if (!this.$refs.sendspace.contains(e.target)) { //点击sendspace以外的区域实现自动关闭表情框
+                    this.facesShow = false
+                } else if (e.target == this.$refs.content) { //点击输入框也可以关闭
+                    this.facesShow = false
+                } else if (e.target == this.$refs.sendspace) { //点击除按钮之外的空白区域也可关闭
+                    this.facesShow = false
+                }
+            }
+        })
     },
     methods: {
         login() { //登录成功后将获得token
@@ -225,6 +241,30 @@ export default {
             } else {
                 this.sendTempMessage({ qq: this.member["id"], group: this.group["id"], messageChain })
             }
+        },
+        chooseFace(uri) {
+            let faceImg = document.createElement("img")
+            faceImg.src = uri
+            this.$refs.content.appendChild(faceImg)
+            this.facesShow = false
+        }
+    },
+    computed: {
+        faceURI() {
+            const list = []
+            for (let i = 1; i <= 224; i++) {
+                if ([115, 129, 130, 141].includes(i)) { //这些表情无了
+                    continue
+                }
+                let id = String(i)
+                if (id.length == 1) {
+                    id = "00" + id
+                } else if (id.length == 2) {
+                    id = "0" + id
+                }
+                list.push(`https://www.emojiall.com/img/platform/qq/${id}@2x.gif`)
+            }
+            return list
         }
     }
 }
@@ -332,5 +372,21 @@ export default {
     }
     div.content img {
         width: 60px;
+    }
+    div.faces {
+        position: absolute;
+        left: 0;
+        bottom: calc(25vh - 14px);
+        background-color: #337ecc;
+        width: 380px;
+        height: 380px;
+        display: flex;
+        flex-wrap: wrap;
+        overflow: scroll;
+    }
+    div.faces img {
+        width: 32px;
+        height: 32px;
+        flex: 0 0 8.333333%;
     }
 </style>
