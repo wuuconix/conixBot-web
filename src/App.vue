@@ -122,6 +122,7 @@ export default {
                     this.wsURI = res.wsURI
                     this.initWS()
                 } else {
+                    localStorage.clear("token")
                     ElNotification({ title: 'Error', message: 'token过期 请重新登录', type: 'error' })
                 }
             })
