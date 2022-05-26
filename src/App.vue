@@ -373,20 +373,42 @@ export default {
     div.content img {
         width: 60px;
     }
-    div.faces {
-        position: absolute;
-        left: 0;
-        bottom: calc(25vh - 14px);
-        background-color: #337ecc;
-        width: 380px;
-        height: 380px;
-        display: flex;
-        flex-wrap: wrap;
-        overflow: scroll;
+
+    @media screen and (min-width: 420px) {
+        div.faces {
+            position: absolute;
+            left: 0;
+            bottom: calc(25vh - 14px);
+            background-color: #337ecc;
+            width: 337px;
+            height: 320px;
+            display: flex;
+            flex-wrap: wrap;
+            overflow: scroll;
+        }
+        div.faces img {
+            width: 32px;
+            height: 32px;
+            flex: 0 0 10%;
+        }
     }
-    div.faces img {
-        width: 32px;
-        height: 32px;
-        flex: 0 0 8.333333%;
+    @media screen and (max-width: 420px) {
+        div.faces {
+            position: absolute;
+            left: 0;
+            bottom: calc(25vh - 14px);
+            background-color: #337ecc;
+            width: 160px;
+            height: 160px;
+            display: flex;
+            flex-wrap: wrap;
+            overflow: scroll;
+        }
+        div.faces img {
+            width: 32px;
+            height: 32px;
+            flex: 0 0 20%;
+        }
     }
+
 </style>
