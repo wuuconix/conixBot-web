@@ -205,10 +205,25 @@ export default {
             }))
         },
         send() {
+            let messageChain = []
+            const nodes = this.$refs.content.childNodes
+            nodes.forEach(element => {
+                if (element.nodeName == "IMG") {
+                    const src = element.src
+                    if (/^data/.test(src)) {
+                        messageChain.push({type: "Image", base64: element.src.slice(22)})
+                    } else {
+                        messageChain.push({type: "Image", url: element.src})
+                    }
+                } else {
+                    messageChain.push({type: "Plain", text: element.textContent})
+                }
+            })
+            console.log(messageChain)
             if (this.chatType == "group") {
-                this.sendGroupMessage({ target: this.group["id"], messageChain:[{ type:"Plain", text: this.$refs.content.innerText }] })
+                this.sendGroupMessage({ target: this.group["id"], messageChain })
             } else {
-                this.sendTempMessage({ qq: this.member["id"], group: this.group["id"], messageChain:[{ type:"Plain", text: this.$refs.content.innerText }]})
+                this.sendTempMessage({ qq: this.member["id"], group: this.group["id"], messageChain })
             }
         }
     }
@@ -313,5 +328,9 @@ export default {
         width: 100%;
         height: calc(100% - 32px);
         border: 2px #337ecc solid;
+        overflow: scroll;
+    }
+    div.content img {
+        width: 60px;
     }
 </style>
