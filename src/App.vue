@@ -423,7 +423,7 @@ export default {
         div.faces {
             position: absolute;
             left: 0;
-            bottom: calc(25vh - 14px);
+            bottom: 32px;
             background-color: #337ecc;
             width: 160px;
             height: 160px;
