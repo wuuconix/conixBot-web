@@ -28,7 +28,9 @@
     </div>
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
-        <div class="msgspace"></div>
+        <div class="msgspace">
+            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index"></message>
+        </div>
         <div class="sendspace" ref="sendspace">
             <div class="content" contenteditable ref="content"></div>
             <el-button type="primary" @click="facesShow = !facesShow">表情</el-button>
@@ -54,6 +56,7 @@
 import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
 import { apiBaseURI } from '../config.js'
 import { ArrowDown } from '@element-plus/icons-vue'
+import Message from '../components/message.vue'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
 import "element-plus/es/components/input/style/css"
@@ -77,17 +80,19 @@ export default {
             merber: {}, //选择的qq群成员
             chatType: "group", //聊天类型
             chatName: "", //群名或者群昵称
-            facesShow: false //是否显示表情预览框
+            facesShow: false, //是否显示表情预览框
+            msgList: [], //消息列表 包含所有消息的data字段，data中包含messageChain和sender
+            newMsg: null //我们新发的消息，当发送成功后会被加入到msgList中
         }
     },
-    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowDown, ElIcon },
+    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowDown, ElIcon, Message },
     mounted() {
         if (localStorage.getItem("token")) { //如果有token则自动发起请求得到wsURI
             this.getWSURI()
         }
         document.body.addEventListener("click", (e) => {
-            console.log(e.target)
-            if (this.facesShow) {
+            // console.log(e.target)
+            if (this.facesShow) {   
                 if (!this.$refs.sendspace.contains(e.target)) { //点击sendspace以外的区域实现自动关闭表情框
                     this.facesShow = false
                 } else if (e.target == this.$refs.content) { //点击输入框也可以关闭
@@ -138,7 +143,8 @@ export default {
             let result = JSON.parse(msg.data)
             console.log(result)
             if (result.syncId == "-1") { //新消息
-                console.log("以上是新消息")
+                this.msgList.push(result.data)
+                console.log(this.msgList)
             } else { //我们请求的回显
                 if (this.action == "login") {
                     if (result.data.code == 0) {
@@ -152,6 +158,8 @@ export default {
                 } else if (this.action == "sendGroupMessage" || this.action == "sendTempMessage") {
                     if (result.data.code == 0) {
                         this.$refs.content.innerText = ""
+                        console.log(this.newMsg)
+                        this.msgList.push(this.newMsg)
                         ElNotification({ title: 'Success', message: '发送成功!', type: 'success' })
                     } else {
                         ElNotification({ title: 'Error', message: '发送失败!', type: 'error' })
@@ -242,6 +250,7 @@ export default {
             } else {
                 this.sendTempMessage({ qq: this.member["id"], group: this.group["id"], messageChain })
             }
+            this.newMsg = {sender: {memberName: "conixBot", bot: true}, messageChain}
         },
         chooseFace(uri) {
             let faceImg = document.createElement("img")
@@ -353,6 +362,10 @@ export default {
         border: 2px #337ecc solid;
         border-top: none;
         border-bottom: none;
+        display: flex;
+        flex-direction: column;
+        overflow: scroll;
+        padding-bottom: 10px;
     }
     div.sendspace {
         width: 100%;
