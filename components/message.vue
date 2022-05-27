@@ -23,10 +23,21 @@ export default {
                     if (this.messageChain[i].base64) { //机器人发送图片是base64格式的，首先检测它
                         img.src = `data:image/png;base64,${this.messageChain[i].base64}`
                     } else {
-                         img.src = this.messageChain[i].url
+                        img.src = this.messageChain[i].url
                     }
                     img.classList.add("msg")
                     div.appendChild(img)
+                } else if (this.messageChain[i].type == "At") {
+                    const qq = this.messageChain[i].target
+                    console.log(this.$parent.memberMap)
+                    const memberName = this.$parent.memberMap.get(qq).memberName
+                    let a = document.createElement("a")
+                    a.textContent = `@${memberName}`
+                    a.title = `${memberName}(${qq})`
+                    a.data = qq
+                    a.href = "javascript:void(0);"
+                    a.className = "at"
+                    div.appendChild(a)
                 }
             }
             return div.innerHTML
@@ -40,6 +51,7 @@ export default {
         display: flex;
         align-items: center;
         justify-content: flex-start;
+        margin: 5px;
     }
     div.aname.right {
         flex-direction: row-reverse;

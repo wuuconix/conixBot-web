@@ -15,14 +15,6 @@
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-        <el-dropdown trigger="click" v-if="online">
-            <el-button type="primary">好友<el-icon class="el-icon--right"><arrow-down /></el-icon></el-button>
-            <template #dropdown>
-                <el-dropdown-menu>
-                    <el-dropdown-item v-for="member in members" @click="chooseMember(member)">{{ member["memberName"] }}</el-dropdown-item>
-                </el-dropdown-menu>
-            </template>
-        </el-dropdown>
         <el-button type="success" @click="this.loginDialog = true" v-if="!online">Login</el-button>
         <el-button type="warning" @click="logout" v-if="online">Logout</el-button>
     </div>
@@ -31,9 +23,17 @@
         <div class="msgspace" ref="msgspace">
             <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown"></message>
         </div>
-        <div class="sendspace" ref="sendspace">
-            <div class="content" contenteditable ref="content"></div>
+        <div class="content" contenteditable ref="content"></div>
+        <div class="functions" ref="functions">
             <el-button type="primary" @click="facesShow = !facesShow">表情</el-button>
+            <el-dropdown trigger="click">
+                <el-button type="primary">艾特<el-icon class="el-icon--right"><arrow-up /></el-icon></el-button>
+                <template #dropdown>
+                    <el-dropdown-menu>
+                        <el-dropdown-item v-for="member in members" @click="at(member)">{{ member["memberName"] }}</el-dropdown-item>
+                    </el-dropdown-menu>
+                </template>
+            </el-dropdown>
             <el-button type="primary" class="send" @click="send">发送</el-button>
             <div class="faces" v-show="facesShow">
                 <img v-for="uri in faceURI" :src="uri" @click="chooseFace(uri)">
@@ -55,7 +55,7 @@
 <script>
 import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
 import { apiBaseURI } from '../config.js'
-import { ArrowDown } from '@element-plus/icons-vue'
+import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import Message from '../components/message.vue'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
@@ -73,31 +73,27 @@ export default {
             key: "",
             ws: null,
             online: false,
-            action: "listen",
             groups: [],
             group: {}, //选择的qq群
+            groupMap: new Map(), //群哈希表 键为群id，值为相关信息的对象
             members: [],
-            merber: {}, //选择的qq群成员
-            chatType: "group", //聊天类型
+            memberMap: new Map(), //哈希表 键为qq，值为相关信息的对象
             chatName: "", //群名或者群昵称
             facesShow: false, //是否显示表情预览框
             msgList: [], //消息列表 包含所有消息的data字段，data中包含messageChain和sender
             newMsg: null //我们新发的消息，当发送成功后会被加入到msgList中
         }
     },
-    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowDown, ElIcon, Message },
+    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowUp, ArrowDown, ElIcon, Message },
     mounted() {
         if (localStorage.getItem("token")) { //如果有token则自动发起请求得到wsURI
             this.getWSURI()
         }
         document.body.addEventListener("click", (e) => {
-            // console.log(e.target)
-            if (this.facesShow) {   
-                if (!this.$refs.sendspace.contains(e.target)) { //点击sendspace以外的区域实现自动关闭表情框
+            if (this.facesShow == true) {
+                if (!this.$refs.functions.contains(e.target)) { //点击sendspace以外的区域实现自动关闭表情框
                     this.facesShow = false
-                } else if (e.target == this.$refs.content) { //点击输入框也可以关闭
-                    this.facesShow = false
-                } else if (e.target == this.$refs.sendspace) { //点击除按钮之外的空白区域也可关闭
+                } else if (e.target == this.$refs.functions) { //点击除按钮之外的空白区域也可关闭
                     this.facesShow = false
                 }
             }
@@ -133,7 +129,6 @@ export default {
             })
         },
         initWS() {
-            this.action = "login"
             let socket = new WebSocket(this.wsURI)
             socket.addEventListener("message", this.handle_message)
             socket.addEventListener("close", this.handle_close)
@@ -142,91 +137,88 @@ export default {
         handle_message(msg) {
             let result = JSON.parse(msg.data)
             console.log(result)
-            if (result.syncId == "-1") { //新消息
-                this.msgList.push(result.data)
-                console.log(this.msgList)
-            } else { //我们请求的回显
-                if (this.action == "login") {
-                    if (result.data.code == 0) {
-                        this.loginDialog = false
-                        this.online = true
-                        this.groupList() //登录成功后去查询qq群列表
-                        ElNotification({ title: 'Success', message: '登录成功!', type: 'success' })
-                    } else {
-                        ElNotification({ title: 'Error', message: '登录失败!', type: 'error' })
+            if (result.syncId == "") { //空表示为连接过程
+                if (result.data.code == 0) {
+                    this.loginDialog = false
+                    this.online = true
+                    if (this.qq) {
+                        localStorage.setItem("qq", this.qq)
                     }
-                } else if (this.action == "sendGroupMessage" || this.action == "sendTempMessage") {
-                    if (result.data.code == 0) {
-                        this.$refs.content.innerText = ""
-                        console.log(this.newMsg)
-                        this.msgList.push(this.newMsg)
-                        ElNotification({ title: 'Success', message: '发送成功!', type: 'success' })
-                    } else {
-                        ElNotification({ title: 'Error', message: '发送失败!', type: 'error' })
-                    }
-                } else if (this.action == "groupList") {
-                    if (result.data.code == 0) {
-                        this.groups = result.data.data
-                        this.action = "listen"
-                    }
-                } else if (this.action == "memberList") {
-                    if (result.data.code == 0) {
-                        this.members = result.data.data
-                        this.action = "listen"
-                    }
+                    this.groupList() //登录成功后去查询qq群列表
+                    this.botProfile() //获得bot的信息
+                    ElNotification({ title: 'Success', message: '登录成功!', type: 'success' })
+                } else {
+                    ElNotification({ title: 'Error', message: '登录失败!', type: 'error' })
                 }
+            } else if (result.syncId == "-1") { //-1表示新消息推送
+                this.msgList.push(result.data)
+            } else if (result.syncId == "1") { //1表示发送群消息
+                if (result.data.code == 0) {
+                    this.$refs.content.innerText = ""
+                    console.log(this.newMsg)
+                    this.msgList.push(this.newMsg)
+                    ElNotification({ title: 'Success', message: '发送成功!', type: 'success' })
+                } else {
+                    ElNotification({ title: 'Error', message: '发送失败!', type: 'error' })
+                }
+            } else if (result.syncId == "2") { //2表示获得群列表
+                this.groups = result.data.data
+                for (let group of this.groups) {
+                    this.groupMap.set(group.id, {name: group.name, members: []})
+                    this.memberList(group.id)
+                }
+            } else if (result.syncId == "3") { //3表示获得群成员列表
+                for (let member of result.data.data) { //更新哈希表
+                    if (!this.memberMap.has(member.id)) {
+                        this.memberMap.set(member.id, {memberName: member.memberName})
+                    }
+                    this.groupMap.get(member.group.id).members.push(member) //将群成员加入groupMap的members列表中
+                }
+            } else if (result.syncId == "4") { //4表示获取bot资料
+                const memberName = result.data.nickname
+                const qq = Number(localStorage.getItem("qq"))
+                this.memberMap.set(qq, {memberName})
             }
-
         },
         handle_close() {
             this.online = false
             ElNotification({ title: 'Success', message: '下线成功！', type: 'success' })
         },
         sendGroupMessage(content) {
-            this.action = "sendGroupMessage"
             this.ws.send(JSON.stringify({
-                syncId: 114514,
+                syncId: 1,
                 command: "sendGroupMessage", // 命令字
                 subCommand: null,
                 content
             }))
         },
-        sendTempMessage(content) {
-            this.action = "sendTempMessage"
-            this.ws.send(JSON.stringify({
-                syncId: 114514,
-                command: "sendTempMessage", // 命令字
-                subCommand: null,
-                content
-            }))
-        },
         groupList() {
-            this.action = "groupList"
             this.ws.send(JSON.stringify({
-                syncId: 114514,
+                syncId: 2,
                 command: "groupList", // 命令字
                 subCommand: null,
                 content: null
             }))
         },
         chooseGroup(group) {
-            this.chatType = "group"
             this.group = group
             this.chatName = group["name"]
-            this.memberList()
+            this.members = this.groupMap.get(group.id).members
         },
-        chooseMember(member) {
-            this.chatType = "member"
-            this.member = member
-            this.chatName = member["memberName"]
-        },
-        memberList() {
-            this.action = "memberList"
+        memberList(groupId) {
             this.ws.send(JSON.stringify({
-                syncId: 114514,
+                syncId: 3,
                 command: "memberList", // 命令字
                 subCommand: null,
-                content: { target: this.group["id"] }
+                content: { target: groupId }
+            }))
+        },
+        botProfile() {
+            this.ws.send(JSON.stringify({
+                syncId: 4,
+                command: "botProfile", // 命令字
+                subCommand: null,
+                content: {}
             }))
         },
         send() {
@@ -240,16 +232,15 @@ export default {
                     } else {
                         messageChain.push({type: "Image", url: element.src})
                     }
+                } else if (element.nodeName == "A" && element.className == "at") {
+                    const qq = element.data
+                    messageChain.push({type: "At", target: Number(qq)})
                 } else {
                     messageChain.push({type: "Plain", text: element.textContent})
                 }
             })
             console.log(messageChain)
-            if (this.chatType == "group") {
-                this.sendGroupMessage({ target: this.group["id"], messageChain })
-            } else {
-                this.sendTempMessage({ qq: this.member["id"], group: this.group["id"], messageChain })
-            }
+            this.sendGroupMessage({ target: this.group["id"], messageChain })
             this.newMsg = {sender: {memberName: "conixBot", bot: true}, messageChain}
         },
         chooseFace(uri) {
@@ -266,6 +257,17 @@ export default {
                     behavior: 'smooth'
                 });
             }, 100)
+        },
+        at(member) {
+            const memberName = member.memberName
+            const qq = member.id
+            let a = document.createElement("a")
+            a.textContent = `@${memberName}`
+            a.title = `${memberName}(${qq})`
+            a.data = qq
+            a.href = "https://conix.ml"
+            a.className = "at"
+            this.$refs.content.appendChild(a)
         }
     },
     computed: {
@@ -300,7 +302,7 @@ export default {
     }
     div.menu {
         width: 100%;
-        height: 64px;
+        height: 48px;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -308,12 +310,8 @@ export default {
         box-sizing: border-box;
         padding: 0px 5%;
     }
-    img.github {
-        width: 50px;
-        border-radius: 25px;
-    }
     img.comi {
-        width: 55px;
+        width: 40px;
         border-radius: 10px;
     }
     .el-input:nth-of-type(1) {
@@ -324,13 +322,11 @@ export default {
             width: 500px;
         }
     }
-
     @media screen and (max-width: 768px) {
         .el-dialog {
             width: 80%;
         }
     }
-
     .el-dialog--center .el-dialog__body {
         display: flex;
         flex-direction: column;
@@ -349,16 +345,16 @@ export default {
     div.chat {
         width: 80%;
         margin: auto;
-        height: calc(100% - 64px);
+        height: calc(100% - 48px);
     }
     div.chatname {
         box-sizing: border-box;
         width: 100%;
-        height: 64px;
+        height: 48px;
         display: flex;
         justify-content: center;
         align-content: center;
-        line-height: 64px;
+        line-height: 48px;
         overflow: hidden;
         color: #337ecc;
         border: 2px #337ecc solid;
@@ -367,7 +363,7 @@ export default {
     div.msgspace {
         box-sizing: border-box;
         width: 100%;
-        height: calc(75% - 64px);
+        height: calc(75% - 48px);
         border: 2px #337ecc solid;
         border-top: none;
         border-bottom: none;
@@ -375,33 +371,41 @@ export default {
         flex-direction: column;
         overflow: scroll;
         padding-bottom: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
-    div.sendspace {
-        width: 100%;
-        height: 25%;
-        position: relative;
-    }
-    .el-button.send {
-        position: absolute;
-        right: 0;
-        bottom: 0;
-    }
+
     div.content {
         box-sizing: border-box;
         width: 100%;
-        height: calc(100% - 32px);
+        height: calc(25% - 32px);
         border: 2px #337ecc solid;
         overflow: scroll;
+        padding: 10px;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     div.content img {
         width: 60px;
     }
 
+    div.content a, .msgspace a {
+        text-decoration: none;
+        margin: 5px;
+        color: #409EFF;
+    }
+
+    div.functions {
+        height: 32px;
+        display: flex;
+        justify-content: space-between;
+        position: relative;
+    }
     @media screen and (min-width: 420px) {
         div.faces {
             position: absolute;
             left: 0;
-            bottom: calc(25vh - 14px);
+            bottom: 32px;
             background-color: #337ecc;
             width: 337px;
             height: 320px;
@@ -433,5 +437,6 @@ export default {
             flex: 0 0 20%;
         }
     }
+
 
 </style>
