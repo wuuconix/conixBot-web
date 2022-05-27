@@ -28,8 +28,8 @@
     </div>
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
-        <div class="msgspace">
-            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index"></message>
+        <div class="msgspace" ref="msgspace">
+            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown"></message>
         </div>
         <div class="sendspace" ref="sendspace">
             <div class="content" contenteditable ref="content"></div>
@@ -257,6 +257,15 @@ export default {
             faceImg.src = uri
             this.$refs.content.appendChild(faceImg)
             this.facesShow = false
+        },
+        goDown() {
+            setTimeout(() => {
+                this.$refs.msgspace.scrollTo({
+                    top: this.$refs.msgspace.scrollHeight,
+                    left: 0,
+                    behavior: 'smooth'
+                });
+            }, 100)
         }
     },
     computed: {

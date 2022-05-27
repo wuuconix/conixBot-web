@@ -1,6 +1,6 @@
 <template>
     <div :class="{aname: true, left: isLeft, right: !isLeft}">
-        <img class="avatar" src="https://url.wuuconix.link/favicon">
+        <img class="avatar" src="https://url.wuuconix.link/favicon" @load="$emit('goDown')">
         <span>{{ memberName }}</span>
     </div>
     <div class="msgWrapper" :class="{msgWrapper: true, left: isLeft, right: !isLeft}">
@@ -11,6 +11,7 @@
 <script>
 export default {
     props: ["memberName", "messageChain", "isLeft"],
+    emits: ["goDown"],
     computed: {
         msgHTML() {
             let div = document.createElement("div")
