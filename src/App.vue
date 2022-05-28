@@ -21,7 +21,7 @@
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
         <div class="msgspace" ref="msgspace">
-            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown"></message>
+            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :qq="data.sender.id" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown"></message>
         </div>
         <div class="content" contenteditable ref="content"></div>
         <div class="functions" ref="functions">
@@ -146,9 +146,14 @@ export default {
                     }
                     this.groupList() //登录成功后去查询qq群列表
                     this.botProfile() //获得bot的信息
-                    ElNotification({ title: 'Success', message: '登录成功!', type: 'success' })
+                    if (this.key) {
+                        ElNotification({ title: 'Success', message: '登录成功!', type: 'success' })
+                    } else {
+                        ElNotification({ title: 'Success', message: '自动登录成功!', type: 'success' })
+                    }
                 } else {
-                    ElNotification({ title: 'Error', message: '登录失败!', type: 'error' })
+                    ElNotification({ title: 'Error', message: '请重新登录!', type: 'error' })
+                    this.logout()
                 }
             } else if (result.syncId == "-1") { //-1表示新消息推送
                 this.msgList.push(result.data)
@@ -181,8 +186,10 @@ export default {
             }
         },
         handle_close() {
-            this.online = false
-            ElNotification({ title: 'Success', message: '下线成功！', type: 'success' })
+            if (this.online)  {
+                this.online = false
+                ElNotification({ title: 'Success', message: '下线成功！', type: 'success' })
+            }
         },
         sendGroupMessage(content) {
             this.ws.send(JSON.stringify({
@@ -241,7 +248,7 @@ export default {
             })
             console.log(messageChain)
             this.sendGroupMessage({ target: this.group["id"], messageChain })
-            this.newMsg = {sender: {memberName: "conixBot", bot: true}, messageChain}
+            this.newMsg = {sender: {memberName: "conixBot", bot: true, id: localStorage.getItem("qq")}, messageChain}
         },
         chooseFace(uri) {
             let faceImg = document.createElement("img")
@@ -412,6 +419,7 @@ export default {
             display: flex;
             flex-wrap: wrap;
             overflow: scroll;
+            overflow-x: auto;
         }
         div.faces img {
             width: 32px;
@@ -430,6 +438,7 @@ export default {
             display: flex;
             flex-wrap: wrap;
             overflow: scroll;
+            overflow-x: auto;
         }
         div.faces img {
             width: 32px;

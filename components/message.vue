@@ -1,6 +1,6 @@
 <template>
     <div :class="{aname: true, left: isLeft, right: !isLeft}">
-        <img class="avatar" src="https://url.wuuconix.link/favicon" @load="$emit('goDown')">
+        <img class="avatar" :src="`https://q1.qlogo.cn/g?b=qq&nk=${qq}&s=640`" @load="$emit('goDown')">
         <span>{{ memberName }}</span>
     </div>
     <div class="msgWrapper" :class="{msgWrapper: true, left: isLeft, right: !isLeft}">
@@ -10,7 +10,7 @@
 
 <script>
 export default {
-    props: ["memberName", "messageChain", "isLeft"],
+    props: ["memberName", "messageChain", "isLeft", "qq"],
     emits: ["goDown"],
     computed: {
         msgHTML() {
