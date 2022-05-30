@@ -35,6 +35,8 @@
                     </el-dropdown-menu>
                 </template>
             </el-dropdown>
+            <input type="file" ref="file" @change="handle_file" multiple="multiple" v-show="false">
+            <el-button type="primary" @click="chooseImg">图片</el-button>
             <el-button type="primary" class="send" @click="send">发送</el-button>
             <div class="faces" v-show="facesShow">
                 <img v-for="uri in faceURI" :src="uri" @click="chooseFace(uri)">
@@ -282,6 +284,25 @@ export default {
                 a.className = "at"
             }
             this.$refs.content.appendChild(a)
+        },
+        chooseImg() {
+            console.log(this.$refs.file)
+            this.$refs.file.click()
+        },
+        handle_file() {
+            for (let file of this.$refs.file.files) {
+                if (/^image/.test(file.type)) {
+                    const reader = new FileReader()
+                    reader.readAsDataURL(file)
+                    reader.onload = () => {
+                        const src = reader.result
+                        const img = document.createElement("img")
+                        img.src = src
+                        this.$refs.content.appendChild(img)
+                    }
+                }
+            }
+
         }
     },
     computed: {
