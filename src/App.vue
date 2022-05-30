@@ -237,7 +237,9 @@ export default {
             nodes.forEach(element => {
                 if (element.nodeName == "IMG") {
                     const src = element.src
-                    if (/^data/.test(src)) {
+                    if (/^data:image\/jpeg/.test(src)) {
+                        messageChain.push({type: "Image", base64: element.src.slice(23)})
+                    } else if (/^data:image\/png/.test(src)) {
                         messageChain.push({type: "Image", base64: element.src.slice(22)})
                     } else {
                         messageChain.push({type: "Image", url: element.src})
