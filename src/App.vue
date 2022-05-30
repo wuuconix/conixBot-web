@@ -30,6 +30,7 @@
                 <el-button type="primary">艾特<el-icon class="el-icon--right"><arrow-up /></el-icon></el-button>
                 <template #dropdown>
                     <el-dropdown-menu>
+                        <el-dropdown-item @click="at('all')">全体成员</el-dropdown-item>
                         <el-dropdown-item v-for="member in members" @click="at(member)">{{ member["memberName"] }}</el-dropdown-item>
                     </el-dropdown-menu>
                 </template>
@@ -242,6 +243,8 @@ export default {
                 } else if (element.nodeName == "A" && element.className == "at") {
                     const qq = element.data
                     messageChain.push({type: "At", target: Number(qq)})
+                } else if (element.nodeName == "A" && element.className == "atall") {
+                    messageChain.push({type: "AtAll"})
                 } else {
                     messageChain.push({type: "Plain", text: element.textContent})
                 }
@@ -266,14 +269,18 @@ export default {
             }, 100)
         },
         at(member) {
-            const memberName = member.memberName
-            const qq = member.id
+            const memberName = member.memberName ?? "全体成员"
+            const qq = member.id ?? "all"
             let a = document.createElement("a")
             a.textContent = `@${memberName}`
             a.title = `${memberName}(${qq})`
             a.data = qq
             a.href = "https://conix.ml"
-            a.className = "at"
+            if (member == "all") {
+                a.className = "atall"
+            } else {
+                a.className = "at"
+            }
             this.$refs.content.appendChild(a)
         }
     },

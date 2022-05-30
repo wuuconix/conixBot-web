@@ -38,6 +38,13 @@ export default {
                     a.href = "javascript:void(0);"
                     a.className = "at"
                     div.appendChild(a)
+                } else if (this.messageChain[i].type == "AtAll") {
+                    let a = document.createElement("a")
+                    a.textContent = `@全体成员`
+                    a.title = `@全体成员(all)`
+                    a.href = "javascript:void(0);"
+                    a.className = "atall"
+                    div.appendChild(a)
                 }
             }
             return div.innerHTML
