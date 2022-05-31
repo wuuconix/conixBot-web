@@ -374,7 +374,7 @@ export default {
             }
         }
     }
-    .dialog {
+    .el-overlay-dialog {
         .el-input:nth-of-type(1) {
             margin: 10px 0px;
         }
@@ -394,6 +394,10 @@ export default {
             justify-content: space-around;
             align-items: center;
             padding: 15px;
+        }
+        img.comi {
+            width: 60px;
+            border-radius: 10px;
         }
     }
     div.chat {
