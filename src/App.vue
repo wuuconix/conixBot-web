@@ -3,8 +3,8 @@
         <div class="status">
             <span v-if="online">在</span>
             <span v-if="!online">离</span>
-            <img class="comi offline" src="https://tvax4.sinaimg.cn/large/007YVyKcly1h2jky1tq57g308e08ekjl.gif" v-if="!online">
-            <img class="comi online" src="https://tva4.sinaimg.cn/large/007YVyKcly1h2kl62sylyj30dp0fkjvq.jpg" v-if="online">
+            <img class="comi offline" :src="comiOffline" v-if="!online" @click="previewImg(comiOffline)">
+            <img class="comi online" :src="comiOnline" v-if="online" @click="previewImg(comiOnline)">
             <span>线</span>
         </div>
         <el-dropdown trigger="click" v-if="online">
@@ -53,7 +53,7 @@
             </span>
         </template>
     </el-dialog>
-    <el-image-viewer @close="this.imageViewer = false" :url-list="imageList" v-if="imageViewer"/>
+    <el-image-viewer @close="this.imageViewer = false" :url-list="imageList" v-if="imageViewer" :hide-on-click-modal="true"/>
 </template>
 
 <script>
@@ -88,7 +88,10 @@ export default {
             msgList: [], //消息列表 包含所有消息的data字段，data中包含messageChain和sender
             newMsg: null, //我们新发的消息，当发送成功后会被加入到msgList中
             imageViewer: false, //是否展现图片预览框
-            imageList: []
+            imageList: [], //用于ImageViewer
+            comiOffline: "https://tvax4.sinaimg.cn/large/007YVyKcly1h2jky1tq57g308e08ekjl.gif", //离线的古见
+            comiOnline: "https://tva4.sinaimg.cn/large/007YVyKcly1h2kl62sylyj30dp0fkjvq.jpg", //在线的古见
+
         }
     },
     components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowUp, ArrowDown, ElIcon, Message, ElImageViewer },
