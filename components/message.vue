@@ -4,14 +4,14 @@
         <span>{{ memberName }}</span>
     </div>
     <div class="msgWrapper" :class="{msgWrapper: true, left: isLeft, right: !isLeft}">
-        <div class="msg" v-html="msgHTML"></div>
+        <div class="msg" v-html="msgHTML" @click="handle_click"></div>
     </div>
 </template>
 
 <script>
 export default {
     props: ["memberName", "messageChain", "isLeft", "qq"],
-    emits: ["goDown"],
+    emits: ["goDown", "imgPreview"],
     computed: {
         msgHTML() {
             let div = document.createElement("div")
@@ -48,6 +48,13 @@ export default {
                 }
             }
             return div.innerHTML
+        }
+    },
+    methods: {
+        handle_click(e) { //由于v-html内部无法绑定事件故用父元素来进行 事件代理
+            if (e.target.nodeName == "IMG") {
+                this.$parent.previewImg(e.target.src)
+            }
         }
     },
 }

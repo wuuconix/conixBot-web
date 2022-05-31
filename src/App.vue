@@ -21,9 +21,9 @@
     <div class="chat">
         <div class="chatname">{{ chatName }}</div>
         <div class="msgspace" ref="msgspace">
-            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :qq="data.sender.id" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown"></message>
+            <message v-for="(data, index) in msgList" :memberName="data.sender.memberName" :qq="data.sender.id" :messageChain="data.messageChain" :isLeft="!data.sender.bot" :key="index" @goDown="goDown" @imgPreview="previewImg"></message>
         </div>
-        <div class="content" contenteditable ref="content"></div>
+        <div class="content" contenteditable ref="content" @click="handle_click"></div>
         <div class="functions" ref="functions">
             <el-button type="primary" @click="facesShow = !facesShow">表情</el-button>
             <el-dropdown trigger="click">
@@ -53,10 +53,11 @@
             </span>
         </template>
     </el-dialog>
+    <el-image-viewer @close="this.imageViewer = false" :url-list="imageList" v-if="imageViewer"/>
 </template>
 
 <script>
-import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon } from 'element-plus'
+import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElIcon, ElImageViewer } from 'element-plus'
 import { apiBaseURI } from '../config.js'
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import Message from '../components/message.vue'
@@ -66,6 +67,7 @@ import "element-plus/es/components/input/style/css"
 import "element-plus/es/components/notification/style/css"
 import "element-plus/es/components/skeleton/style/css"
 import "element-plus/es/components/dropdown/style/css"
+import "element-plus/es/components/image-viewer/style/css"
 
 export default {
     data() {
@@ -84,10 +86,12 @@ export default {
             chatName: "", //群名或者群昵称
             facesShow: false, //是否显示表情预览框
             msgList: [], //消息列表 包含所有消息的data字段，data中包含messageChain和sender
-            newMsg: null //我们新发的消息，当发送成功后会被加入到msgList中
+            newMsg: null, //我们新发的消息，当发送成功后会被加入到msgList中
+            imageViewer: false, //是否展现图片预览框
+            imageList: []
         }
     },
-    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowUp, ArrowDown, ElIcon, Message },
+    components: { ElButton, ElDialog, ElInput, ElSkeleton, ElDropdown, ElDropdownMenu, ElDropdownItem, ArrowUp, ArrowDown, ElIcon, Message, ElImageViewer },
     mounted() {
         if (localStorage.getItem("token")) { //如果有token则自动发起请求得到wsURI
             this.getWSURI()
@@ -304,7 +308,15 @@ export default {
                     }
                 }
             }
-
+        },
+        previewImg(src) {
+            this.imageList = [src]
+            this.imageViewer = true
+        },
+        handle_click(e) { //由于v-html内部无法绑定事件故用父元素来进行 事件代理
+            if (e.target.nodeName == "IMG") {
+                this.previewImg(e.target.src)
+            }
         }
     },
     computed: {
