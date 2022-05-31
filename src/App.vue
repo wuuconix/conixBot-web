@@ -328,7 +328,7 @@ export default {
 }
 </script>
 
-<style>
+<style lang="scss">
     * {
         padding: 0;
         margin: 0;
@@ -346,136 +346,134 @@ export default {
         background-color: #337ecc;
         box-sizing: border-box;
         padding: 0px 5%;
-    }
-    img.comi {
-        width: 40px;
-        border-radius: 10px;
-    }
-    .el-input:nth-of-type(1) {
-        margin: 10px 0px;
-    }
-    @media screen and (min-width: 768px) {
-        .el-dialog {
-            width: 500px;
+        div.status {
+            display: flex;
+            align-items: center;
+            img.comi {
+                width: 40px;
+                border-radius: 10px;
+            }
+            span {
+                margin: 0 10px;
+                color: #FFF;
+            }
         }
     }
-    @media screen and (max-width: 768px) {
-        .el-dialog {
-            width: 80%;
+    .dialog {
+        .el-input:nth-of-type(1) {
+            margin: 10px 0px;
         }
-    }
-    .el-dialog--center .el-dialog__body {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-around;
-        align-items: center;
-        padding: 15px;
-    }
-    div.status {
-        display: flex;
-        align-items: center;
-    }
-    div.status span {
-        margin: 0 10px;
-        color: #FFF;
+        @media screen and (min-width: 768px) {
+            .el-dialog {
+                width: 500px;
+            }
+        }
+        @media screen and (max-width: 768px) {
+            .el-dialog {
+                width: 80%;
+            }
+        }
+        .el-dialog--center .el-dialog__body {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 15px;
+        }
     }
     div.chat {
         width: 80%;
         margin: auto;
         height: calc(100% - 48px);
-    }
-    div.chatname {
-        box-sizing: border-box;
-        width: 100%;
-        height: 48px;
-        display: flex;
-        justify-content: center;
-        align-content: center;
-        line-height: 48px;
-        overflow: hidden;
-        color: #337ecc;
-        border: 2px #337ecc solid;
-        border-top: none;
-    }
-    div.msgspace {
-        box-sizing: border-box;
-        width: 100%;
-        height: calc(75% - 48px);
-        border: 2px #337ecc solid;
-        border-top: none;
-        border-bottom: none;
-        display: flex;
-        flex-direction: column;
-        overflow: scroll;
-        padding-bottom: 10px;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-
-    div.content {
-        box-sizing: border-box;
-        width: 100%;
-        height: calc(25% - 32px);
-        border: 2px #337ecc solid;
-        overflow: scroll;
-        padding: 10px;
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
-    div.content img {
-        width: 60px;
-    }
-
-    div.content a, .msgspace a {
-        text-decoration: none;
-        margin: 5px;
-        color: #409EFF;
-    }
-
-    div.functions {
-        height: 32px;
-        display: flex;
-        justify-content: space-between;
-        position: relative;
-    }
-    @media screen and (min-width: 420px) {
-        div.faces {
-            position: absolute;
-            left: 0;
-            bottom: 32px;
-            background-color: #337ecc;
-            width: 337px;
-            height: 320px;
+        div.chatname {
+            box-sizing: border-box;
+            width: 100%;
+            height: 48px;
             display: flex;
-            flex-wrap: wrap;
-            overflow: scroll;
-            overflow-x: auto;
+            justify-content: center;
+            align-content: center;
+            line-height: 48px;
+            overflow: hidden;
+            color: #337ecc;
+            border: 2px #337ecc solid;
+            border-top: none;
         }
-        div.faces img {
-            width: 32px;
-            height: 32px;
-            flex: 0 0 10%;
-        }
-    }
-    @media screen and (max-width: 420px) {
-        div.faces {
-            position: absolute;
-            left: 0;
-            bottom: 32px;
-            background-color: #337ecc;
-            width: 160px;
-            height: 160px;
+        div.msgspace {
+            box-sizing: border-box;
+            width: 100%;
+            height: calc(75% - 48px);
+            border: 2px #337ecc solid;
+            border-top: none;
+            border-bottom: none;
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             overflow: scroll;
-            overflow-x: auto;
+            padding-bottom: 10px;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
-        div.faces img {
-            width: 32px;
+        div.content {
+            box-sizing: border-box;
+            width: 100%;
+            height: calc(25% - 32px);
+            border: 2px #337ecc solid;
+            overflow: scroll;
+            padding: 10px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            img {
+                width: 60px;
+            }
+        }
+        a {
+            text-decoration: none;
+            margin: 5px;
+            color: #409EFF;
+        }
+        div.functions {
             height: 32px;
-            flex: 0 0 20%;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            @media screen and (min-width: 420px) {
+                div.faces {
+                    position: absolute;
+                    left: 0;
+                    bottom: 32px;
+                    background-color: #337ecc;
+                    width: 337px;
+                    height: 320px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    overflow: scroll;
+                    overflow-x: auto;
+                    img {
+                        width: 32px;
+                        height: 32px;
+                        flex: 0 0 10%;
+                    }
+                }
+            }
+            @media screen and (max-width: 420px) {
+                div.faces {
+                    position: absolute;
+                    left: 0;
+                    bottom: 32px;
+                    background-color: #337ecc;
+                    width: 160px;
+                    height: 160px;
+                    display: flex;
+                    flex-wrap: wrap;
+                    overflow: scroll;
+                    overflow-x: auto;
+                    img {
+                        width: 32px;
+                        height: 32px;
+                        flex: 0 0 20%;
+                    }
+                }
+            }
         }
     }
-
-
 </style>
+
