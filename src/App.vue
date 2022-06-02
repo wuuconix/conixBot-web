@@ -39,7 +39,9 @@
             <el-button type="primary" @click="chooseImg">图片</el-button>
             <el-button type="primary" class="send" @click="send">发送</el-button>
             <div class="faces" v-show="facesShow">
-                <img v-for="uri in faceURI" :src="uri" @click="chooseFace(uri)">
+                <img v-for="(title, id) in qqFaceMap" :src="`https://www.emojiall.com/img/platform/qq/${id}@2x.gif`"
+                    :title="title" @click="chooseFace(id, title)"
+                >
             </div>
         </div>
     </div>
@@ -61,6 +63,7 @@ import { ElButton, ElDialog, ElInput, ElNotification, ElSkeleton, ElDropdown, El
 import { apiBaseURI } from '../config.js'
 import { ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import Message from '../components/message.vue'
+import { qqFaceMap, qqFaceMapReverse } from '../utils/qqFace.js'
 import "element-plus/es/components/button/style/css"
 import "element-plus/es/components/dialog/style/css"
 import "element-plus/es/components/input/style/css"
@@ -91,6 +94,7 @@ export default {
             imageList: [], //用于ImageViewer
             comiOffline: "https://tvax4.sinaimg.cn/large/007YVyKcly1h2jky1tq57g308e08ekjl.gif", //离线的古见
             comiOnline: "https://tva4.sinaimg.cn/large/007YVyKcly1h2kl62sylyj30dp0fkjvq.jpg", //在线的古见
+            qqFaceMap: qqFaceMap, //qq表情正向表，id为键，含义为值
 
         }
     },
@@ -249,7 +253,11 @@ export default {
                     } else if (/^data:image\/png/.test(src)) {
                         messageChain.push({type: "Image", base64: element.src.slice(22)})
                     } else {
-                        messageChain.push({type: "Image", url: element.src})
+                        if (element.className == "face") { //如果是qq表情，发送Face消息类型
+                            messageChain.push({type: "Face", name: element.title})
+                        } else {
+                            messageChain.push({type: "Image", url: element.src})
+                        }
                     }
                 } else if (element.nodeName == "A" && element.className == "at") {
                     const qq = element.data
@@ -264,9 +272,13 @@ export default {
             this.sendGroupMessage({ target: this.group["id"], messageChain })
             this.newMsg = {sender: {memberName: "conixBot", bot: true, id: localStorage.getItem("qq")}, messageChain}
         },
-        chooseFace(uri) {
+        chooseFace(id, title) {
             let faceImg = document.createElement("img")
-            faceImg.src = uri
+            faceImg.src = `https://www.emojiall.com/img/platform/qq/${id}@2x.gif`
+            if (title) {
+                faceImg.classList.add("face")
+                faceImg.title = title
+            }
             this.$refs.content.appendChild(faceImg)
             this.facesShow = false
         },
@@ -325,17 +337,8 @@ export default {
     computed: {
         faceURI() {
             const list = []
-            for (let i = 1; i <= 224; i++) {
-                if ([115, 129, 130, 141].includes(i)) { //这些表情无了
-                    continue
-                }
-                let id = String(i)
-                if (id.length == 1) {
-                    id = "00" + id
-                } else if (id.length == 2) {
-                    id = "0" + id
-                }
-                list.push(`https://www.emojiall.com/img/platform/qq/${id}@2x.gif`)
+            for (let index of Object.keys(qqFaceMap)) {
+                list.push(`https://www.emojiall.com/img/platform/qq/${index}@2x.gif`)
             }
             return list
         }
@@ -459,7 +462,7 @@ export default {
                     position: absolute;
                     left: 0;
                     bottom: 32px;
-                    background-color: #337ecc;
+                    background-color: rgba(#337ecc, 0.2);
                     width: 337px;
                     height: 320px;
                     display: flex;
@@ -478,7 +481,7 @@ export default {
                     position: absolute;
                     left: 0;
                     bottom: 32px;
-                    background-color: #337ecc;
+                    background-color: rgba(#337ecc, 0.2);
                     width: 160px;
                     height: 160px;
                     display: flex;

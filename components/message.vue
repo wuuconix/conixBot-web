@@ -9,6 +9,7 @@
 </template>
 
 <script>
+import { qqFaceMapReverse } from '../utils/qqFace.js'
 export default {
     props: ["memberName", "messageChain", "isLeft", "qq"],
     emits: ["goDown", "imgPreview"],
@@ -16,9 +17,10 @@ export default {
         msgHTML() {
             let div = document.createElement("div")
             for (let i = 0; i < this.messageChain.length; i++) {
-                if (this.messageChain[i].type == "Plain") {
+                const type = this.messageChain[i].type
+                if (type == "Plain") {
                     div.appendChild(document.createTextNode(this.messageChain[i].text))
-                } else if (this.messageChain[i].type == "Image") {
+                } else if (type == "Image") {
                     let img = document.createElement("img")
                     if (this.messageChain[i].base64) { //机器人发送图片是base64格式的，首先检测它
                         img.src = `data:image/png;base64,${this.messageChain[i].base64}`
@@ -27,7 +29,7 @@ export default {
                     }
                     img.classList.add("msg")
                     div.appendChild(img)
-                } else if (this.messageChain[i].type == "At") {
+                } else if (type == "At") {
                     const qq = this.messageChain[i].target
                     console.log(this.$parent.memberMap)
                     const memberName = this.$parent.memberMap.get(qq).memberName
@@ -38,13 +40,21 @@ export default {
                     a.href = "javascript:void(0);"
                     a.className = "at"
                     div.appendChild(a)
-                } else if (this.messageChain[i].type == "AtAll") {
+                } else if (type == "AtAll") {
                     let a = document.createElement("a")
                     a.textContent = `@全体成员`
                     a.title = `@全体成员(all)`
                     a.href = "javascript:void(0);"
                     a.className = "atall"
                     div.appendChild(a)
+                } else if (type == "Face") {
+                    let faceImg = document.createElement("img")
+                    const name = this.messageChain[i].name
+                    const id = qqFaceMapReverse[name]
+                    faceImg.src = `https://www.emojiall.com/img/platform/qq/${id}@2x.gif`
+                    faceImg.title = name
+                    faceImg.className = "face"
+                    div.appendChild(faceImg)
                 }
             }
             return div.innerHTML
